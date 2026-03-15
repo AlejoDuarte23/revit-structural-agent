@@ -340,11 +340,23 @@ def _section_database_candidates(section_label: str) -> List[str]:
    raise ValueError(f"Unsupported database-backed section label: {section_label}")
 
 
+def get_all_frame_section_names(SapModel) -> List[str]:
+   try:
+       res = SapModel.PropFrame.GetNameList(0, [])
+       names, ret = _parse_getnamelist_result(res)
+       if ret != 0:
+           raise RuntimeError(f"PropFrame.GetNameList failed (ret={ret})")
+       return names
+   except Exception:
+       res = SapModel.PropFrame.GetNameList()
+       names, ret = _parse_getnamelist_result(res)
+       if ret != 0:
+           raise RuntimeError(f"PropFrame.GetNameList failed (ret={ret})")
+       return names
+
+
 def _database_section_label(section_label: str) -> str:
-   normalized = section_label.strip()
-   if normalized.upper().startswith(("UB", "UC")) and " " not in normalized[:3]:
-       return f"{normalized[:2]} {normalized[2:].replace('X', 'x')}"
-   return normalized
+   return section_label.strip().replace(" ", "")
 
 
 def import_frame_section_from_label(
@@ -353,25 +365,27 @@ def import_frame_section_from_label(
    material_name: str = "S355",
 ) -> str:
    """
-   Import a frame section from a CSI property database using the same label as
-   the generated model, e.g. 'UB 203x133x25' or 'UC 254x254x73'.
+   Import a frame section from a CSI property database using the compact
+   no-space label used by the generated model, e.g. 'UB203X133X25'.
    """
-   section_name = section_label.replace(" ", "_")
-   database_section_label = _database_section_label(section_label)
+   section_name = _database_section_label(section_label)
+   existing_section_names = set(get_all_frame_section_names(SapModel))
+   if section_name in existing_section_names:
+       return section_name
+
    failures: List[str] = []
    for database_file in _section_database_candidates(section_label):
        ret = SapModel.PropFrame.ImportProp(
            section_name,
            material_name,
            database_file,
-           database_section_label,
+           section_name,
        )
        if ret == 0:
            return section_name
-       failures.append(f"{database_file} ret={ret}")
+       failures.append(f"{database_file}:{section_name} ret={ret}")
    raise RuntimeError(
-       f"PropFrame.ImportProp failed for section {section_label} "
-       f"(database label {database_section_label}). "
+       f"PropFrame.ImportProp failed for section {section_label}. "
        f"Tried: {', '.join(failures)}"
    )
 
