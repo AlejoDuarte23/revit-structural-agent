@@ -39,6 +39,46 @@ def plot_model_3d(model: Model, show_node_ids: bool = False) -> go.Figure:
             )
         )
 
+    if model.areas:
+        ordered_node_ids = sorted(model.nodes)
+        node_index_map = {node_id: index for index, node_id in enumerate(ordered_node_ids)}
+        fig.add_trace(
+            go.Mesh3d(
+                x=[model.nodes[node_id]["x"] for node_id in ordered_node_ids],
+                y=[model.nodes[node_id]["y"] for node_id in ordered_node_ids],
+                z=[model.nodes[node_id]["z"] for node_id in ordered_node_ids],
+                i=[
+                    node_index_map[area["nodes"][0]]
+                    for area in model.export_areas()
+                    if len(area["nodes"]) == 4
+                    for _ in range(2)
+                ],
+                j=[
+                    triangle_node
+                    for area in model.export_areas()
+                    if len(area["nodes"]) == 4
+                    for triangle_node in (
+                        node_index_map[area["nodes"][1]],
+                        node_index_map[area["nodes"][2]],
+                    )
+                ],
+                k=[
+                    triangle_node
+                    for area in model.export_areas()
+                    if len(area["nodes"]) == 4
+                    for triangle_node in (
+                        node_index_map[area["nodes"][2]],
+                        node_index_map[area["nodes"][3]],
+                    )
+                ],
+                name="slabs",
+                color="#b8c4d6",
+                opacity=0.35,
+                hoverinfo="skip",
+                showscale=False,
+            )
+        )
+
     ordered_node_ids = sorted(model.nodes)
     fig.add_trace(
         go.Scatter3d(
@@ -71,7 +111,7 @@ def plot_model_3d(model: Model, show_node_ids: bool = False) -> go.Figure:
 
 
 if __name__ == "__main__":
-    building = RadialBuilding(core_diameter=15, diameter=30, inner_ring_count=1, n_slices=13)
+    building = RadialBuilding()
     model = building.generate()
     fig = plot_model_3d(model)
     fig.write_html("radial_multistory_model.html")

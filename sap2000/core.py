@@ -227,6 +227,29 @@ def define_steel_material(
    return material_name
 
 
+def define_concrete_material(
+   SapModel,
+   material_name: str = "C30",
+   e_modulus: float = 25000000.0,
+   poisson_ratio: float = 0.2,
+   thermal_coefficient: float = 1.0e-5,
+) -> str:
+   MATERIAL_CONCRETE = 2
+   ret = SapModel.PropMaterial.SetMaterial(material_name, MATERIAL_CONCRETE)
+   if ret != 0:
+       raise RuntimeError(f"PropMaterial.SetMaterial failed for {material_name} (ret={ret})")
+
+   ret = SapModel.PropMaterial.SetMPIsotropic(
+       material_name,
+       e_modulus,
+       poisson_ratio,
+       thermal_coefficient,
+   )
+   if ret != 0:
+       raise RuntimeError(f"PropMaterial.SetMPIsotropic failed for {material_name} (ret={ret})")
+   return material_name
+
+
 def define_rectangular_frame_section(
    SapModel,
    section_name: str = "STEEL_RECT",
@@ -237,6 +260,33 @@ def define_rectangular_frame_section(
    ret = SapModel.PropFrame.SetRectangle(section_name, material_name, depth, width)
    if ret != 0:
        raise RuntimeError(f"PropFrame.SetRectangle failed for {section_name} (ret={ret})")
+   return section_name
+
+
+def define_slab_area_section(
+   SapModel,
+   section_name: str = "SLAB150",
+   material_name: str = "C30",
+   thickness: float = 0.15,
+) -> str:
+   SLAB_TYPE_SLAB = 0
+   SHELL_TYPE_SHELL_THIN = 1
+
+   if not hasattr(SapModel.PropArea, "SetSlab"):
+       raise RuntimeError(
+           "This API build does not expose PropArea.SetSlab. "
+           "Use the equivalent shell or area property method available in your SAP2000 OAPI version."
+       )
+
+   ret = SapModel.PropArea.SetSlab(
+       section_name,
+       SLAB_TYPE_SLAB,
+       SHELL_TYPE_SHELL_THIN,
+       material_name,
+       thickness,
+   )
+   if ret != 0:
+       raise RuntimeError(f"PropArea.SetSlab failed for {section_name} (ret={ret})")
    return section_name
 
 
@@ -357,6 +407,86 @@ def create_points_from_model(SapModel, model: Model) -> Dict[int, str]:
    return point_names
 
 
+def _parse_add_area_result(result: Any) -> Tuple[int, str]:
+   if not isinstance(result, tuple):
+       raise RuntimeError(f"AreaObj.AddByPoint returned non-tuple: {type(result)} {result}")
+
+   ret = None
+   area_name = ""
+   for value in result:
+       if isinstance(value, int):
+           ret = value
+       elif isinstance(value, str):
+           area_name = value
+
+   if ret is None:
+       raise RuntimeError(f"Could not parse AreaObj.AddByPoint return: {result}")
+   return int(ret), str(area_name)
+
+
+def create_slab_from_4_points(
+   SapModel,
+   area_name: str,
+   p1: str,
+   p2: str,
+   p3: str,
+   p4: str,
+   section_name: str,
+) -> str:
+   result = SapModel.AreaObj.AddByPoint(
+       4,
+       [p1, p2, p3, p4],
+       area_name,
+       section_name,
+       area_name,
+   )
+   ret, sap_name = _parse_add_area_result(result)
+   if ret != 0:
+       raise RuntimeError(f"AreaObj.AddByPoint failed for {area_name} (ret={ret})")
+   return sap_name or area_name
+
+
+def create_slab_from_4_node_ids(
+   SapModel,
+   area_name: str,
+   node_ids: List[int],
+   point_names: Dict[int, str],
+   section_name: str,
+) -> str:
+   if len(node_ids) != 4:
+       raise ValueError(f"Slab {area_name} must have exactly 4 node ids, got {len(node_ids)}")
+
+   p1, p2, p3, p4 = [point_names[node_id] for node_id in node_ids]
+   return create_slab_from_4_points(
+       SapModel,
+       area_name=area_name,
+       p1=p1,
+       p2=p2,
+       p3=p3,
+       p4=p4,
+       section_name=section_name,
+   )
+
+
+def create_areas_from_model(
+   SapModel,
+   model: Model,
+   point_names: Dict[int, str],
+) -> Dict[int, str]:
+   area_names: Dict[int, str] = {}
+   for area in model.export_areas():
+       area_id = int(area["area_id"])
+       sap_name = create_slab_from_4_node_ids(
+           SapModel,
+           area_name=str(area_id),
+           node_ids=list(area["nodes"]),
+           point_names=point_names,
+           section_name=str(area["section"]),
+       )
+       area_names[area_id] = sap_name
+   return area_names
+
+
 def create_frames_from_model(
    SapModel,
    model: Model,
@@ -393,9 +523,11 @@ def import_structural_model(
    model: Model,
    material_name: str = "S355",
    custom_sections: Dict[str, Dict[str, float]] | None = None,
+   concrete_material_name: str = "C30",
+   slab_thickness: float = 0.15,
    initialize_blank: bool = False,
    units: int = 6,
-) -> Dict[str, Dict[int, str] | str]:
+) -> Dict[str, Any]:
    """
    Define a steel material, import the model's steel sections from the CSI
    section database, optionally define custom I-sections, then create all
@@ -418,11 +550,27 @@ def import_structural_model(
        point_names=point_names,
        frame_sections=imported_sections,
    )
+   area_names: Dict[int, str] = {}
+   if model.export_areas():
+       define_concrete_material(SapModel, material_name=concrete_material_name)
+       for area_section in sorted({str(area["section"]) for area in model.export_areas()}):
+           define_slab_area_section(
+               SapModel,
+               section_name=area_section,
+               material_name=concrete_material_name,
+               thickness=slab_thickness,
+           )
+       area_names = create_areas_from_model(
+           SapModel,
+           model,
+           point_names=point_names,
+       )
    return {
        "material_name": material_name,
        "sections": imported_sections,
        "points": point_names,
        "frames": frame_names,
+       "areas": area_names,
    }
 
 def select_results_output(SapModel, name: str) -> str:
