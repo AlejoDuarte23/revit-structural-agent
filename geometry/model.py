@@ -109,12 +109,12 @@ class Model:
 
 
 SECTIONS = {
-    "core ring": "UB203x133x25",
-    "inner ring": "UB254x146x31",
-    "middle ring": "UB305x165x40",
-    "outer ring": "UB356x171x45",
-    "nerve": "UB203x102x23",
-    "column": "UC254x254x73",
+    "core ring": "UB203X133X25",
+    "inner ring": "UB254X146X31",
+    "middle ring": "UB305X165X40",
+    "outer ring": "UB356X171X45",
+    "nerve": "UB203X102X23",
+    "column": "UC254X254X73",
 }
 
 AREA_SECTIONS = {
