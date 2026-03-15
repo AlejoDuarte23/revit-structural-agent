@@ -269,25 +269,41 @@ def define_slab_area_section(
    material_name: str = "C30",
    thickness: float = 0.15,
 ) -> str:
-   SLAB_TYPE_SLAB = 0
    SHELL_TYPE_SHELL_THIN = 1
+   color = 0
 
-   if not hasattr(SapModel.PropArea, "SetSlab"):
-       raise RuntimeError(
-           "This API build does not expose PropArea.SetSlab. "
-           "Use the equivalent shell or area property method available in your SAP2000 OAPI version."
+   if hasattr(SapModel.PropArea, "SetShell_1"):
+       ret = SapModel.PropArea.SetShell_1(
+           section_name,
+           SHELL_TYPE_SHELL_THIN,
+           True,
+           material_name,
+           color,
+           thickness,
+           thickness,
        )
+       if ret != 0:
+           raise RuntimeError(f"PropArea.SetShell_1 failed for {section_name} (ret={ret})")
+       return section_name
 
-   ret = SapModel.PropArea.SetSlab(
-       section_name,
-       SLAB_TYPE_SLAB,
-       SHELL_TYPE_SHELL_THIN,
-       material_name,
-       thickness,
+   if hasattr(SapModel.PropArea, "SetShell"):
+       ret = SapModel.PropArea.SetShell(
+           section_name,
+           SHELL_TYPE_SHELL_THIN,
+           material_name,
+           color,
+           thickness,
+           thickness,
+       )
+       if ret != 0:
+           raise RuntimeError(f"PropArea.SetShell failed for {section_name} (ret={ret})")
+       return section_name
+
+   available_methods = [name for name in dir(SapModel.PropArea) if "Shell" in name or "Slab" in name]
+   raise RuntimeError(
+       "SAP2000 did not expose a supported shell area-property initializer on SapModel.PropArea. "
+       f"Available related methods: {available_methods}"
    )
-   if ret != 0:
-       raise RuntimeError(f"PropArea.SetSlab failed for {section_name} (ret={ret})")
-   return section_name
 
 
 def define_i_frame_section(
@@ -319,9 +335,16 @@ def define_i_frame_section(
 
 def _section_database_candidates(section_label: str) -> List[str]:
    normalized = section_label.strip().upper()
-   if normalized.startswith(("UB ", "UC ")):
+   if normalized.startswith(("UB", "UC")):
        return ["BSShapes2006.pro", "BSShapes.pro"]
    raise ValueError(f"Unsupported database-backed section label: {section_label}")
+
+
+def _database_section_label(section_label: str) -> str:
+   normalized = section_label.strip()
+   if normalized.upper().startswith(("UB", "UC")) and " " not in normalized[:3]:
+       return f"{normalized[:2]} {normalized[2:].replace('X', 'x')}"
+   return normalized
 
 
 def import_frame_section_from_label(
@@ -334,19 +357,21 @@ def import_frame_section_from_label(
    the generated model, e.g. 'UB 203x133x25' or 'UC 254x254x73'.
    """
    section_name = section_label.replace(" ", "_")
+   database_section_label = _database_section_label(section_label)
    failures: List[str] = []
    for database_file in _section_database_candidates(section_label):
        ret = SapModel.PropFrame.ImportProp(
            section_name,
            material_name,
            database_file,
-           section_label,
+           database_section_label,
        )
        if ret == 0:
            return section_name
        failures.append(f"{database_file} ret={ret}")
    raise RuntimeError(
-       f"PropFrame.ImportProp failed for section {section_label}. "
+       f"PropFrame.ImportProp failed for section {section_label} "
+       f"(database label {database_section_label}). "
        f"Tried: {', '.join(failures)}"
    )
 
