@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from geometry.model import Model, RadialBuilding
-from sap2000.core import Sap2000Session, import_structural_model
+from sap2000.core import Sap2000Session, assign_fixed_supports_by_z, import_structural_model
 from sap2000.slab_loads import define_basic_slab_gravity_loading
 
 
@@ -37,7 +37,9 @@ def create_radial_building_in_sap2000(
     material_name: str = "S355",
     concrete_material_name: str = "C30",
     slab_thickness: float = 0.15,
-    apply_basic_slab_loading: bool = False,
+    apply_fixed_supports: bool = True,
+    support_z: float = 0.0,
+    apply_basic_slab_loading: bool = True,
     dead_uniform_load: float = -2.5,
     live_uniform_load: float = -3.0,
     dead_self_weight_multiplier: float = 0.0,
@@ -63,6 +65,15 @@ def create_radial_building_in_sap2000(
             units=units,
         )
 
+        support_result: Optional[Dict[int, str]] = None
+        if apply_fixed_supports:
+            support_result = assign_fixed_supports_by_z(
+                sap.SapModel,
+                geometry_model,
+                point_names=sap_result["points"],
+                z=support_z,
+            )
+
         loading_result: Optional[Dict[str, Any]] = None
         if apply_basic_slab_loading and sap_result.get("areas"):
             loading_result = define_basic_slab_gravity_loading(
@@ -76,13 +87,16 @@ def create_radial_building_in_sap2000(
         return {
             "geometry": geometry_model,
             "sap2000": sap_result,
+            "supports": support_result,
             "loading": loading_result,
         }
 
 
 if __name__ == "__main__":
     result = create_radial_building_in_sap2000(
-        apply_basic_slab_loading=False,
+        apply_fixed_supports=True,
+        support_z=0.0,
+        apply_basic_slab_loading=True,
     )
     geometry_model = result["geometry"]
     print(f"Created geometry with {len(geometry_model.nodes)} nodes")
@@ -91,3 +105,6 @@ if __name__ == "__main__":
     print(f"Imported {len(result['sap2000']['points'])} SAP2000 points")
     print(f"Imported {len(result['sap2000']['frames'])} SAP2000 frames")
     print(f"Imported {len(result['sap2000']['areas'])} SAP2000 areas")
+    print(f"Assigned {len(result['supports'] or {})} fixed supports")
+    if result["loading"] is not None:
+        print(f"Assigned slab load patterns: {result['loading']['patterns']}")

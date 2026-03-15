@@ -446,6 +446,35 @@ def create_points_from_model(SapModel, model: Model) -> Dict[int, str]:
    return point_names
 
 
+def assign_fixed_supports_by_z(
+   SapModel,
+   model: Model,
+   point_names: Dict[int, str],
+   z: float = 0.0,
+   tolerance: float = 1e-9,
+   restraint: List[int] | None = None,
+) -> Dict[int, str]:
+   """
+   Assign fixed supports to all model nodes whose z coordinate matches `z`
+   within `tolerance`.
+   """
+   restraint_values = restraint or [1, 1, 1, 1, 1, 1]
+   supported_points: Dict[int, str] = {}
+
+   for node in model.export_nodes():
+       if abs(float(node["z"]) - float(z)) > tolerance:
+           continue
+       point_name = point_names[node["node_id"]]
+       ret = SapModel.PointObj.SetRestraint(point_name, restraint_values)
+       if ret != 0:
+           raise RuntimeError(
+               f"PointObj.SetRestraint failed for point {point_name} at z={z} (ret={ret})"
+           )
+       supported_points[node["node_id"]] = point_name
+
+   return supported_points
+
+
 def _parse_add_area_result(result: Any) -> Tuple[int, str]:
    if not isinstance(result, tuple):
        raise RuntimeError(f"AreaObj.AddByPoint returned non-tuple: {type(result)} {result}")
