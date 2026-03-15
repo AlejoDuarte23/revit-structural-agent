@@ -465,7 +465,14 @@ def assign_fixed_supports_by_z(
        if abs(float(node["z"]) - float(z)) > tolerance:
            continue
        point_name = point_names[node["node_id"]]
-       ret = SapModel.PointObj.SetRestraint(point_name, restraint_values)
+       result = SapModel.PointObj.SetRestraint(point_name, restraint_values)
+
+       # Parse return - can be just an int or a tuple (ret, restraint_array)
+       if isinstance(result, tuple):
+           ret = result[0]
+       else:
+           ret = result
+
        if ret != 0:
            raise RuntimeError(
                f"PointObj.SetRestraint failed for point {point_name} at z={z} (ret={ret})"

@@ -38,12 +38,13 @@ def ensure_load_pattern(
     if name in existing:
         return name
 
-    ret = SapModel.LoadPatterns.Add(
+    result = SapModel.LoadPatterns.Add(
         name,
         load_pattern_type,
         float(self_weight_multiplier),
         bool(add_analysis_case),
     )
+    ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
         raise RuntimeError(f"LoadPatterns.Add failed for {name} (ret={ret})")
     return name
@@ -55,17 +56,19 @@ def recreate_static_linear_case_from_pattern(
     pattern_name: str,
     scale_factor: float = 1.0,
 ) -> str:
-    ret = SapModel.LoadCases.StaticLinear.SetCase(case_name)
+    result = SapModel.LoadCases.StaticLinear.SetCase(case_name)
+    ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
         raise RuntimeError(f"LoadCases.StaticLinear.SetCase failed for {case_name} (ret={ret})")
 
-    ret = SapModel.LoadCases.StaticLinear.SetLoads(
+    result = SapModel.LoadCases.StaticLinear.SetLoads(
         case_name,
         1,
         ["Load"],
         [pattern_name],
         [float(scale_factor)],
     )
+    ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
         raise RuntimeError(
             f"LoadCases.StaticLinear.SetLoads failed for case {case_name} "
@@ -89,17 +92,19 @@ def recreate_linear_additive_combo(
 
     existing_combo_names = set(get_all_load_combos(SapModel))
     if combo_name in existing_combo_names:
-        ret = SapModel.RespCombo.Delete(combo_name)
+        result = SapModel.RespCombo.Delete(combo_name)
+        ret = result[0] if isinstance(result, tuple) else result
         if ret != 0:
             raise RuntimeError(f"RespCombo.Delete failed for {combo_name} (ret={ret})")
 
-    ret = SapModel.RespCombo.Add(combo_name, CSI_COMBO_LINEAR_ADDITIVE)
+    result = SapModel.RespCombo.Add(combo_name, CSI_COMBO_LINEAR_ADDITIVE)
+    ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
         raise RuntimeError(f"RespCombo.Add failed for {combo_name} (ret={ret})")
 
     for case_name, scale_factor in case_scale_factors.items():
         try:
-            ret = SapModel.RespCombo.SetCaseList(
+            result = SapModel.RespCombo.SetCaseList(
                 combo_name,
                 CSI_CNAME_LOADCASE,
                 case_name,
@@ -107,12 +112,13 @@ def recreate_linear_additive_combo(
             )
         except Exception:
             cname_type = VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, CSI_CNAME_LOADCASE)
-            ret = SapModel.RespCombo.SetCaseList(
+            result = SapModel.RespCombo.SetCaseList(
                 combo_name,
                 cname_type,
                 case_name,
                 float(scale_factor),
             )
+        ret = result[0] if isinstance(result, tuple) else result
         if ret != 0:
             raise RuntimeError(
                 f"RespCombo.SetCaseList failed for combo {combo_name}, "

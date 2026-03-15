@@ -38,7 +38,7 @@ def assign_uniform_area_load(
     coordinate_system: str = "Global",
     replace: bool = True,
 ) -> None:
-    ret = SapModel.AreaObj.SetLoadUniform(
+    result = SapModel.AreaObj.SetLoadUniform(
         area_name,
         load_pattern_name,
         float(value),
@@ -47,6 +47,7 @@ def assign_uniform_area_load(
         coordinate_system,
         CSI_ITEMTYPE_OBJECTS,
     )
+    ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
         raise RuntimeError(
             f"AreaObj.SetLoadUniform failed for area {area_name}, "
