@@ -12,15 +12,16 @@ The JSON shape matches the existing Python exports in [geometry/model.py](/Users
 - `Model.export_lines()` writes `line_id`, `Ni`, `Nj`, `section`, `type`
 - `Model.export_areas()` writes `area_id`, `nodes`, `section`, `type`
 
-The current radial generator also defines the structural naming that Revit will see:
+The current radial generator is aligned to the Revit types shown in your project:
 
-- Member sections come from `SECTIONS`
-- Slab sections come from `AREA_SECTIONS`
+- Beam and radial members export as `UB254x146x31`
+- Columns export as `UC356x406x551`
+- Slabs export as `Concrete 150mm`
 - Line type `"column"` becomes an analytical column
 - Any other line type becomes an analytical beam
 - Area type `"slab"` becomes an analytical floor panel
 
-Coordinates are assumed to be meters. Slab thickness is parsed from section strings such as `SLAB150` meaning `150 mm`.
+Coordinates are assumed to be meters. Slab thickness is parsed from section strings such as `Concrete 150mm`, so the analytical panel thickness becomes `150 mm`.
 
 ## Trigger inside Revit
 
@@ -46,12 +47,12 @@ So there is no hard-coded path and no manual typing by default.
 
 Before running the add-in in Revit 2025:
 
-- Load Structural Framing types with the same names used by the beam/bracing sections, for example `UB203X133X25`
-- Load Structural Columns types with the same names used by the column sections, for example `UC254X254X73`
+- Load Structural Framing types with the beam type `UB254x146x31`
+- Load Structural Columns types with the column type `UC356x406x551`
 - Use a project that supports `AnalyticalMember` and `AnalyticalPanel`
-- `Steel` and `Concrete` materials can be missing; the add-in creates them by name if needed
+- `Steel` and `Concrete, Cast-in-Place gray` can be missing; the add-in creates them by name if needed
 
-If your Revit type names do not exactly match the JSON section names, edit `SectionNameMap` in [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/ImportAnalyticalModelCommand.cs).
+If your Revit type names do not exactly match the JSON section names, edit `SectionNameMap` in [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/ImportAnalyticalModelCommand.cs). The file already includes aliases from the earlier UK section names to the current loaded Revit types.
 
 ## Build on Windows PowerShell
 

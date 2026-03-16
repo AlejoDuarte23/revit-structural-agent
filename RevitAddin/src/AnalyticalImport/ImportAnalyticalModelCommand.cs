@@ -13,6 +13,9 @@ namespace AnalyticalImport;
 [Transaction(TransactionMode.Manual)]
 public sealed class ImportAnalyticalModelCommand : IExternalCommand
 {
+    private const string SteelMaterialName = "Steel";
+    private const string ConcreteMaterialName = "Concrete, Cast-in-Place gray";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -22,8 +25,13 @@ public sealed class ImportAnalyticalModelCommand : IExternalCommand
 
     private static readonly Dictionary<string, string> SectionNameMap = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Example:
-        // ["UB203X102X23"] = "UB203X102X23",
+        // Backward-compatible aliases from earlier geometry exports.
+        ["UB203X133X25"] = "UB254x146x31",
+        ["UB254X146X31"] = "UB254x146x31",
+        ["UB305X165X40"] = "UB254x146x31",
+        ["UB356X171X45"] = "UB254x146x31",
+        ["UB203X102X23"] = "UB254x146x31",
+        ["UC254X254X73"] = "UC356x406x551",
     };
 
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
@@ -114,8 +122,8 @@ public sealed class ImportAnalyticalModelCommand : IExternalCommand
             using Transaction transaction = new(document, "Import Analytical Members & Panels");
             transaction.Start();
 
-            Material steel = GetOrCreateMaterial(document, "Steel");
-            Material concrete = GetOrCreateMaterial(document, "Concrete");
+            Material steel = GetOrCreateMaterial(document, SteelMaterialName);
+            Material concrete = GetOrCreateMaterial(document, ConcreteMaterialName);
 
             foreach (LineDto line in model.Lines)
             {

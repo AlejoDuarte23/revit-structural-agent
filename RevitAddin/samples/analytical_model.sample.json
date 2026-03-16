@@ -6,10 +6,10 @@
     { "node_id": 4, "x": 0.0, "y": 6.0, "z": 0.0 }
   ],
   "lines": [
-    { "line_id": 1, "Ni": 1, "Nj": 2, "section": "UB203X133X25", "type": "nerve" },
-    { "line_id": 2, "Ni": 1, "Nj": 4, "section": "UC254X254X73", "type": "column" }
+    { "line_id": 1, "Ni": 1, "Nj": 2, "section": "UB254x146x31", "type": "beam" },
+    { "line_id": 2, "Ni": 1, "Nj": 4, "section": "UC356x406x551", "type": "column" }
   ],
   "areas": [
-    { "area_id": 1, "nodes": [1, 2, 3, 4], "section": "SLAB150", "type": "slab" }
+    { "area_id": 1, "nodes": [1, 2, 3, 4], "section": "Concrete 150mm", "type": "slab" }
   ]
 }
