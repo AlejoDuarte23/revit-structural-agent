@@ -1,4 +1,4 @@
-# RevitAddin
+# create-analytical-model
 
 This folder contains a Revit 2025 add-in that imports the analytical geometry produced by the Python model in this repository.
 
@@ -52,32 +52,32 @@ Before running the add-in in Revit 2025:
 - Use a project that supports `AnalyticalMember` and `AnalyticalPanel`
 - `Steel` and `Concrete, Cast-in-Place gray` can be missing; the add-in creates them by name if needed
 
-If your Revit type names do not exactly match the JSON section names, edit `SectionNameMap` in [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/ImportAnalyticalModelCommand.cs). The file already includes aliases from the earlier UK section names to the current loaded Revit types.
+If your Revit type names do not exactly match the JSON section names, edit `SectionNameMap` in [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/ImportAnalyticalModelCommand.cs). The file already includes aliases from the earlier UK section names to the current loaded Revit types.
 
 ## Build on Windows PowerShell
 
 From the repository root on Windows:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\RevitAddin\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025
+powershell -ExecutionPolicy Bypass -File .\create-analytical-model\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025
 ```
 
 If Revit is installed in a non-default folder:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\RevitAddin\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025 -RevitInstallDir "C:\Program Files\Autodesk\Revit 2025"
+powershell -ExecutionPolicy Bypass -File .\create-analytical-model\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025 -RevitInstallDir "C:\Program Files\Autodesk\Revit 2025"
 ```
 
 Build and register the add-in manifest in one step:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\RevitAddin\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025 -RegisterAddin
+powershell -ExecutionPolicy Bypass -File .\create-analytical-model\scripts\build-addin.ps1 -Configuration Debug -RevitVersion 2025 -RegisterAddin
 ```
 
 Register only:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\RevitAddin\scripts\register-addin.ps1 -Configuration Debug -RevitVersion 2025
+powershell -ExecutionPolicy Bypass -File .\create-analytical-model\scripts\register-addin.ps1 -Configuration Debug -RevitVersion 2025
 ```
 
 The manifest is copied to:
@@ -90,22 +90,22 @@ The manifest is copied to:
 A helper script is included to export the radial geometry straight from this repo:
 
 ```powershell
-python .\RevitAddin\scripts\export-radial-model-json.py --output .\RevitAddin\out\analytical_model.json
+python .\create-analytical-model\scripts\export-radial-model-json.py --output .\create-analytical-model\out\analytical_model.json
 ```
 
 Example with custom floors:
 
 ```powershell
-python .\RevitAddin\scripts\export-radial-model-json.py --output .\RevitAddin\out\analytical_model.json --floor-level floor_1=4 --floor-level floor_2=8 --floor-level floor_3=12
+python .\create-analytical-model\scripts\export-radial-model-json.py --output .\create-analytical-model\out\analytical_model.json --floor-level floor_1=4 --floor-level floor_2=8 --floor-level floor_3=12
 ```
 
 ## Files
 
-- Project: [AnalyticalImport.csproj](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/AnalyticalImport.csproj)
-- Revit app: [App.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/App.cs)
-- Import command: [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/ImportAnalyticalModelCommand.cs)
-- DTOs: [ModelDtos.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/Models/ModelDtos.cs)
-- Settings store: [SettingsStore.cs](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/SettingsStore.cs)
-- Manifest template: [AnalyticalImport.addin](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/src/AnalyticalImport/Manifest/AnalyticalImport.addin)
-- Build script: [build-addin.ps1](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/scripts/build-addin.ps1)
-- Register script: [register-addin.ps1](/Users/alejandroduarte/Documents/revit-structural-agent/RevitAddin/scripts/register-addin.ps1)
+- Project: [AnalyticalImport.csproj](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/AnalyticalImport.csproj)
+- Revit app: [App.cs](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/App.cs)
+- Import command: [ImportAnalyticalModelCommand.cs](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/ImportAnalyticalModelCommand.cs)
+- DTOs: [ModelDtos.cs](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/Models/ModelDtos.cs)
+- Settings store: [SettingsStore.cs](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/SettingsStore.cs)
+- Manifest template: [AnalyticalImport.addin](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/src/AnalyticalImport/Manifest/AnalyticalImport.addin)
+- Build script: [build-addin.ps1](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/scripts/build-addin.ps1)
+- Register script: [register-addin.ps1](/Users/alejandroduarte/Documents/revit-structural-agent/create-analytical-model/scripts/register-addin.ps1)
