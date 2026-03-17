@@ -39,7 +39,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
 
         if (document.IsFamilyDocument)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 "Open a Revit project document before creating the structural model.");
             return Result.Failed;
@@ -60,7 +60,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
         }
         catch (Exception ex)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 $"Failed to read JSON:{Environment.NewLine}{Environment.NewLine}{ex.Message}");
             return Result.Failed;
@@ -68,7 +68,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
 
         if (model is null)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 "The JSON file is empty or could not be deserialized.");
             return Result.Failed;
@@ -76,7 +76,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
 
         if (model.Nodes.Count == 0 && model.Lines.Count == 0 && model.Areas.Count == 0)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 "The JSON file does not contain nodes, lines, or areas.");
             return Result.Failed;
@@ -94,7 +94,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
         }
         catch (Exception ex)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 $"Invalid node data:{Environment.NewLine}{Environment.NewLine}{ex.Message}");
             return Result.Failed;
@@ -105,7 +105,7 @@ public sealed class CreateRevitModelCommand : IExternalCommand
         List<string> missingSections = FindMissingMemberSections(model, framingSymbols, columnSymbols);
         if (missingSections.Count > 0)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 "Missing steel section types in this Revit project." + Environment.NewLine +
                 "Load Structural Framing / Structural Columns types with these names:" + Environment.NewLine + Environment.NewLine +
@@ -128,13 +128,13 @@ public sealed class CreateRevitModelCommand : IExternalCommand
         }
         catch (Exception ex)
         {
-            TaskDialog.Show(
+            Autodesk.Revit.UI.TaskDialog.Show(
                 "Create Revit Model",
                 $"Model creation failed:{Environment.NewLine}{Environment.NewLine}{ex.Message}");
             return Result.Failed;
         }
 
-        TaskDialog.Show(
+        Autodesk.Revit.UI.TaskDialog.Show(
             "Create Revit Model",
             "Created:" + Environment.NewLine +
             $"- Framing: {summary.BeamsCreated}{Environment.NewLine}" +
