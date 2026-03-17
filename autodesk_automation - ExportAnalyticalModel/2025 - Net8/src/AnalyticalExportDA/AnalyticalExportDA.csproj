@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>AnalyticalExportDA8</AssemblyName>
+    <RootNamespace>AnalyticalExportDA</RootNamespace>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2025</RevitVersion>
+    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+  </PropertyGroup>
+
+  <Target Name="EnsureRevitInstallDir" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(RevitInstallDir)\RevitAPI.dll')" Text="RevitAPI.dll was not found. Build with /p:RevitInstallDir=&quot;C:\Program Files\Autodesk\Revit 2025&quot; or /p:RevitVersion=2025." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autodesk.Forge.DesignAutomation.Revit" Version="2025.0.1" />
+  </ItemGroup>
+</Project>
