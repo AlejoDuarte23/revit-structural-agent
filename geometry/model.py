@@ -109,16 +109,16 @@ class Model:
 
 
 SECTIONS = {
-    "core ring": "UB203X133X25",
-    "inner ring": "UB254X146X31",
-    "middle ring": "UB305X165X40",
-    "outer ring": "UB356X171X45",
-    "nerve": "UB203X102X23",
-    "column": "UC254X254X73",
+    "core ring": "UB254x146x31",
+    "inner ring": "UB254x146x31",
+    "middle ring": "UB254x146x31",
+    "outer ring": "UB254x146x31",
+    "nerve": "UB254x146x31",
+    "column": "UC356x406x551",
 }
 
 AREA_SECTIONS = {
-    "slab": "SLAB150",
+    "slab": "Concrete 150mm",
 }
 
 

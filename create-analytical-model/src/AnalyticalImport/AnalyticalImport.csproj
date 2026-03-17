@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>AnalyticalImport</AssemblyName>
+    <RootNamespace>AnalyticalImport</RootNamespace>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RevitVersion Condition="'$(RevitVersion)' == ''">2025</RevitVersion>
+    <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+  </PropertyGroup>
+
+  <Target Name="EnsureRevitInstallDir" BeforeTargets="ResolveReferences">
+    <Error Condition="!Exists('$(RevitInstallDir)\RevitAPI.dll')" Text="RevitAPI.dll was not found. Build with /p:RevitInstallDir=&quot;C:\Program Files\Autodesk\Revit 2025&quot; or /p:RevitVersion=2025." />
+    <Error Condition="!Exists('$(RevitInstallDir)\RevitAPIUI.dll')" Text="RevitAPIUI.dll was not found. Build with /p:RevitInstallDir=&quot;C:\Program Files\Autodesk\Revit 2025&quot; or /p:RevitVersion=2025." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitInstallDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitInstallDir)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
