@@ -482,6 +482,44 @@ def assign_fixed_supports_by_z(
    return supported_points
 
 
+def assign_supports_by_node_ids(
+   SapModel,
+   point_names: Dict[int, str],
+   restraints_by_node_id: Dict[int, List[int]],
+) -> Dict[int, Dict[str, Any]]:
+   """
+   Assign arbitrary restraints to an explicit set of node ids.
+   """
+   assigned: Dict[int, Dict[str, Any]] = {}
+
+   for node_id, restraint_values in restraints_by_node_id.items():
+       if node_id not in point_names:
+           raise RuntimeError(f"Point name for node {node_id} was not created in SAP2000.")
+
+       if len(restraint_values) != 6:
+           raise ValueError(f"Support restraint for node {node_id} must have 6 values.")
+
+       point_name = point_names[node_id]
+       result = SapModel.PointObj.SetRestraint(point_name, [int(value) for value in restraint_values])
+
+       if isinstance(result, tuple):
+           ret = result[0]
+       else:
+           ret = result
+
+       if ret != 0:
+           raise RuntimeError(
+               f"PointObj.SetRestraint failed for point {point_name} mapped from node {node_id} (ret={ret})"
+           )
+
+       assigned[node_id] = {
+           "point_name": point_name,
+           "restraint": [int(value) for value in restraint_values],
+       }
+
+   return assigned
+
+
 def _parse_add_area_result(result: Any) -> Tuple[int, str]:
    if not isinstance(result, tuple):
        raise RuntimeError(f"AreaObj.AddByPoint returned non-tuple: {type(result)} {result}")
