@@ -1,0 +1,25 @@
+{
+  "nodes": [
+    { "node_id": 1, "x": 0.0, "y": 0.0, "z": 0.0 },
+    { "node_id": 2, "x": 6.0, "y": 0.0, "z": 0.0 },
+    { "node_id": 3, "x": 6.0, "y": 6.0, "z": 0.0 },
+    { "node_id": 4, "x": 0.0, "y": 6.0, "z": 0.0 },
+    { "node_id": 5, "x": 0.0, "y": 0.0, "z": 4.0 },
+    { "node_id": 6, "x": 6.0, "y": 0.0, "z": 4.0 },
+    { "node_id": 7, "x": 6.0, "y": 6.0, "z": 4.0 },
+    { "node_id": 8, "x": 0.0, "y": 6.0, "z": 4.0 }
+  ],
+  "lines": [
+    { "line_id": 1, "Ni": 5, "Nj": 6, "section": "UB254x146x31", "type": "beam" },
+    { "line_id": 2, "Ni": 6, "Nj": 7, "section": "UB254x146x31", "type": "beam" },
+    { "line_id": 3, "Ni": 7, "Nj": 8, "section": "UB254x146x31", "type": "beam" },
+    { "line_id": 4, "Ni": 8, "Nj": 5, "section": "UB254x146x31", "type": "beam" },
+    { "line_id": 5, "Ni": 1, "Nj": 5, "section": "UC356x406x551", "type": "column" },
+    { "line_id": 6, "Ni": 2, "Nj": 6, "section": "UC356x406x551", "type": "column" },
+    { "line_id": 7, "Ni": 3, "Nj": 7, "section": "UC356x406x551", "type": "column" },
+    { "line_id": 8, "Ni": 4, "Nj": 8, "section": "UC356x406x551", "type": "column" }
+  ],
+  "areas": [
+    { "area_id": 1, "nodes": [5, 6, 7, 8], "section": "Concrete 150mm", "type": "slab" }
+  ]
+}

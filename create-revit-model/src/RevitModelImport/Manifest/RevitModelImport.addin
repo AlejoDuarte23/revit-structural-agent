@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Create Revit Model</Name>
+    <Assembly>C:\RevitAddins\create-revit-model\RevitModelImport.dll</Assembly>
+    <AddInId>6C6FC9B1-0C9B-47A5-B25C-2C84525087EC</AddInId>
+    <FullClassName>RevitModelImport.App</FullClassName>
+    <VendorId>AI</VendorId>
+    <VendorDescription>Structural model import from JSON</VendorDescription>
+  </AddIn>
+</RevitAddIns>
