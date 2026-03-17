@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Analytical Export</Name>
+    <Assembly>C:\RevitAddins\export-analytical-model\AnalyticalExport.dll</Assembly>
+    <AddInId>2372A50B-A91A-4187-A3A8-4F53C00B4B34</AddInId>
+    <FullClassName>AnalyticalExport.App</FullClassName>
+    <VendorId>AI</VendorId>
+    <VendorDescription>Analytical export to JSON</VendorDescription>
+  </AddIn>
+</RevitAddIns>
