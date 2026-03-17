@@ -50,12 +50,19 @@ def ensure_load_pattern(
     return name
 
 
-def recreate_static_linear_case_from_pattern(
+def ensure_static_linear_case(
     SapModel,
     case_name: str,
     pattern_name: str,
     scale_factor: float = 1.0,
 ) -> str:
+    existing_combo_names = set(get_all_load_combos(SapModel))
+    if case_name in existing_combo_names:
+        raise RuntimeError(
+            f"Load case name {case_name} conflicts with an existing response combo. "
+            "Load case names must differ from all combo names."
+        )
+
     result = SapModel.LoadCases.StaticLinear.SetCase(case_name)
     ret = result[0] if isinstance(result, tuple) else result
     if ret != 0:
@@ -77,7 +84,7 @@ def recreate_static_linear_case_from_pattern(
     return case_name
 
 
-def recreate_linear_additive_combo(
+def ensure_linear_additive_combo(
     SapModel,
     combo_name: str,
     case_scale_factors: Dict[str, float],
@@ -126,3 +133,29 @@ def recreate_linear_additive_combo(
             )
 
     return combo_name
+
+
+def recreate_static_linear_case_from_pattern(
+    SapModel,
+    case_name: str,
+    pattern_name: str,
+    scale_factor: float = 1.0,
+) -> str:
+    return ensure_static_linear_case(
+        SapModel,
+        case_name=case_name,
+        pattern_name=pattern_name,
+        scale_factor=scale_factor,
+    )
+
+
+def recreate_linear_additive_combo(
+    SapModel,
+    combo_name: str,
+    case_scale_factors: Dict[str, float],
+) -> str:
+    return ensure_linear_additive_combo(
+        SapModel,
+        combo_name=combo_name,
+        case_scale_factors=case_scale_factors,
+    )

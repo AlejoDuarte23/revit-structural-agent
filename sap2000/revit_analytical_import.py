@@ -194,7 +194,13 @@ class RevitAnalyticalSapGenerator:
         apply_supports: bool = True,
         apply_loads: bool = True,
         dead_self_weight_multiplier: float = 0.0,
+        dead_uniform_load_kn_per_m2: float = 1.0,
+        live_uniform_load_kn_per_m2: float = 2.0,
+        run_analysis_after_generation: bool = True,
+        extract_support_reactions: bool = True,
+        analysis_model_path: Optional[str | Path] = None,
     ) -> None:
+        self.payload_source_path = Path(payload).resolve() if isinstance(payload, (str, Path)) else None
         self.payload = self.coerce_payload(payload)
         self.custom_sections = custom_sections
         self.initialize_blank = initialize_blank
@@ -205,6 +211,11 @@ class RevitAnalyticalSapGenerator:
         self.apply_supports = apply_supports
         self.apply_loads = apply_loads
         self.dead_self_weight_multiplier = dead_self_weight_multiplier
+        self.dead_uniform_load_kn_per_m2 = dead_uniform_load_kn_per_m2
+        self.live_uniform_load_kn_per_m2 = live_uniform_load_kn_per_m2
+        self.run_analysis_after_generation = run_analysis_after_generation
+        self.extract_support_reactions = extract_support_reactions
+        self.analysis_model_path = Path(analysis_model_path).resolve() if analysis_model_path is not None else None
 
     @staticmethod
     def coerce_payload(
@@ -268,24 +279,28 @@ class RevitAnalyticalSapGenerator:
             supports[node.node_id] = support.restraint
         return supports
 
-    def collect_area_loads(self) -> List[Dict[str, Any]]:
-        loads: List[Dict[str, Any]] = []
-        for area in self.payload.areas:
-            if area.metadata is None:
-                continue
-            for load in area.metadata.loads:
-                payload = load.model_dump(mode="python", exclude_none=True)
-                payload["area_id"] = area.area_id
-                loads.append(payload)
-        return loads
+    def resolve_analysis_model_path(self) -> Path:
+        if self.analysis_model_path is not None:
+            return self.analysis_model_path
+
+        if self.payload_source_path is not None:
+            return self.payload_source_path.with_suffix(".sdb")
+
+        return (Path.cwd() / "sap2000_analysis.sdb").resolve()
 
     def generate(self) -> Dict[str, Any]:
-        from sap2000.core import Sap2000Session, assign_supports_by_node_ids, import_structural_model
-        from sap2000.slab_loads import apply_uniform_area_loads_from_revit_export
+        from sap2000.core import (
+            Sap2000Session,
+            assign_supports_by_node_ids,
+            get_support_reactions_all_combos,
+            import_structural_model,
+            save_model_and_run_analysis,
+        )
+        from sap2000.slab_loads import define_uniform_slab_load_cases_and_combos
 
         geometry_model = self.build_geometry_model()
         supports_by_node_id = self.collect_supports()
-        area_loads = self.collect_area_loads()
+        analysis_model_path = self.resolve_analysis_model_path()
 
         with Sap2000Session() as sap:
             sap_result = import_structural_model(
@@ -308,13 +323,33 @@ class RevitAnalyticalSapGenerator:
                 )
 
             loading_result: Optional[Dict[str, Any]] = None
-            if self.apply_loads and area_loads and sap_result.get("areas"):
-                loading_result = apply_uniform_area_loads_from_revit_export(
+            if self.apply_loads and sap_result.get("areas"):
+                loading_result = define_uniform_slab_load_cases_and_combos(
                     sap.SapModel,
-                    area_name_by_area_id=sap_result["areas"],
-                    load_payloads=area_loads,
-                    default_self_weight_multiplier=self.dead_self_weight_multiplier,
+                    slab_area_names=list(sap_result["areas"].values()),
+                    dead_uniform_load_kn_per_m2=self.dead_uniform_load_kn_per_m2,
+                    live_uniform_load_kn_per_m2=self.live_uniform_load_kn_per_m2,
+                    dead_self_weight_multiplier=self.dead_self_weight_multiplier,
                 )
+
+            analysis_result: Optional[Dict[str, Any]] = None
+            if self.run_analysis_after_generation:
+                saved_model_path = save_model_and_run_analysis(
+                    sap.SapModel,
+                    analysis_model_path,
+                )
+                analysis_result = {
+                    "model_path": str(saved_model_path),
+                    "ran": True,
+                }
+
+            reactions_result: Optional[Dict[str, Any]] = None
+            if self.extract_support_reactions and self.run_analysis_after_generation:
+                supports, reactions_by_joint = get_support_reactions_all_combos(sap.SapModel)
+                reactions_result = {
+                    "supports": supports,
+                    "by_joint": reactions_by_joint,
+                }
 
             return {
                 "input_model": self.payload,
@@ -322,4 +357,6 @@ class RevitAnalyticalSapGenerator:
                 "sap2000": sap_result,
                 "supports": support_result,
                 "loading": loading_result,
+                "analysis": analysis_result,
+                "support_reactions": reactions_result,
             }
