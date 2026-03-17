@@ -1,0 +1,125 @@
+{
+  "nodes": [
+    {
+      "node_id": 1,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "metadata": {
+        "coord_key": "0.000000,0.000000,0.000000",
+        "source_refs": [
+          {
+            "kind": "member",
+            "revit_element_id": 101,
+            "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-node-1"
+          }
+        ]
+      }
+    },
+    {
+      "node_id": 2,
+      "x": 6.0,
+      "y": 0.0,
+      "z": 0.0,
+      "metadata": {
+        "coord_key": "6.000000,0.000000,0.000000",
+        "source_refs": [
+          {
+            "kind": "member",
+            "revit_element_id": 101,
+            "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-node-2"
+          }
+        ]
+      }
+    },
+    {
+      "node_id": 3,
+      "x": 6.0,
+      "y": 6.0,
+      "z": 0.0,
+      "metadata": {
+        "coord_key": "6.000000,6.000000,0.000000",
+        "source_refs": [
+          {
+            "kind": "panel",
+            "revit_element_id": 201,
+            "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-node-3"
+          }
+        ]
+      }
+    },
+    {
+      "node_id": 4,
+      "x": 0.0,
+      "y": 6.0,
+      "z": 0.0,
+      "metadata": {
+        "coord_key": "0.000000,6.000000,0.000000",
+        "source_refs": [
+          {
+            "kind": "panel",
+            "revit_element_id": 201,
+            "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-node-4"
+          }
+        ]
+      }
+    }
+  ],
+  "lines": [
+    {
+      "line_id": 1,
+      "Ni": 1,
+      "Nj": 2,
+      "section": "UB254x146x31",
+      "type": "beam",
+      "metadata": {
+        "revit_element_id": 101,
+        "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-line-1",
+        "structural_role": "StructuralRoleBeam",
+        "material_name": "Steel",
+        "section_shape": "W-Wide Flange",
+        "cross_section_rotation_deg": 0.0,
+        "physical_element_id": 301,
+        "physical_unique_id": "c4f40a78-5aa1-4cc7-b4d5-physical-line-1"
+      }
+    }
+  ],
+  "areas": [
+    {
+      "area_id": 1,
+      "nodes": [1, 2, 3, 4],
+      "section": "Concrete 150mm",
+      "type": "slab",
+      "metadata": {
+        "revit_element_id": 201,
+        "revit_unique_id": "c4f40a78-5aa1-4cc7-b4d5-area-1",
+        "structural_role": "StructuralRoleFloor",
+        "material_name": "Concrete",
+        "thickness_mm": 150.0,
+        "physical_element_id": 401,
+        "physical_unique_id": "c4f40a78-5aa1-4cc7-b4d5-physical-area-1",
+        "openings": [],
+        "loads": [
+          {
+            "kind": "area_uniform",
+            "load_case_name": "DEAD",
+            "load_category_name": "Dead",
+            "load_nature_name": "Dead",
+            "is_hosted": true,
+            "is_constrained_on_host": true,
+            "is_projected": false,
+            "orient_to": "Project",
+            "force_vector_global_kn_per_m2": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": -2.5
+            },
+            "num_reference_points": 1,
+            "host_element_id": 201,
+            "host_unique_id": "c4f40a78-5aa1-4cc7-b4d5-area-1"
+          }
+        ]
+      }
+    }
+  ]
+}

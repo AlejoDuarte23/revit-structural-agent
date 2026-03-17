@@ -29,17 +29,22 @@ class Model:
         y: float,
         z: float = 0.0,
         node_id: Optional[int] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> int:
         nid = self.create_node_id() if node_id is None else int(node_id)
         if nid in self.nodes:
             raise ValueError(f"Node {nid} already exists")
 
-        self.nodes[nid] = {
+        payload = {
             "node_id": nid,
             "x": float(x),
             "y": float(y),
             "z": float(z),
         }
+        if metadata:
+            payload.update(metadata)
+
+        self.nodes[nid] = payload
         self.current_node_id = max(self.current_node_id, nid)
         return nid
 
@@ -50,6 +55,7 @@ class Model:
         section: str,
         member_type: str,
         line_id: Optional[int] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> int:
         if ni not in self.nodes or nj not in self.nodes:
             raise ValueError("Both Ni and Nj must already exist")
@@ -58,13 +64,17 @@ class Model:
         if lid in self.lines:
             raise ValueError(f"Line {lid} already exists")
 
-        self.lines[lid] = {
+        payload = {
             "line_id": lid,
             "Ni": int(ni),
             "Nj": int(nj),
             "section": str(section),
             "type": str(member_type),
         }
+        if metadata:
+            payload.update(metadata)
+
+        self.lines[lid] = payload
         self.current_line_id = max(self.current_line_id, lid)
         return lid
 
