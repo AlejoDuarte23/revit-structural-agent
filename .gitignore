@@ -211,3 +211,9 @@ __marimo__/
 # .NET / Revit add-in build artifacts
 **/bin/
 **/obj/
+# Design Automation bundle outputs (keeping *.bundle.zip tracked for convenience)
+# *.bundle.zip  # Uncomment this line if you DON'T want to commit the zip
+**/AnalyticalExportDA.bundle/Contents/*.dll
+**/AnalyticalExportDA.bundle/Contents/*.pdb
+**/AnalyticalExportDA.bundle/Contents/*.deps.json
+autodesk_automation*/files/output/

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage Name="RevitDesignAutomation"
+                    Description="Export analytical model to JSON"
+                    Author="Alejo Duarte">
+  <CompanyDetails Name="Alejo Duarte" Url="https://github.com/AlejoDuarte23"/>
+  <Components Description="Analytical export DA app">
+    <RuntimeRequirements SeriesMin="R2025" SeriesMax="R2025" Platform="Revit" OS="Win64"/>
+    <ComponentEntry AppName="AnalyticalExportDA"
+                    Version="1.0.0"
+                    AppDescription="Export analytical members, panels, openings, and hosted area loads to JSON"
+                    ModuleName="./Contents/AnalyticalExportDA8.addin"
+                    LoadOnRevitStartup="True"
+                    LoadOnCommandInvocation="False"/>
+  </Components>
+</ApplicationPackage>

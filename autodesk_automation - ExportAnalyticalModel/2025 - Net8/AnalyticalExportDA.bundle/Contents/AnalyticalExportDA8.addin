@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="DBApplication">
+    <Name>AnalyticalExportDA</Name>
+    <Assembly>AnalyticalExportDA8.dll</Assembly>
+    <AddInId>0CC7A4FA-8B40-47D1-BA86-82EBB9E08F2E</AddInId>
+    <FullClassName>AnalyticalExportDA.App</FullClassName>
+    <VendorId>AD23</VendorId>
+    <VendorDescription>Headless analytical model export for APS Design Automation</VendorDescription>
+  </AddIn>
+</RevitAddIns>
