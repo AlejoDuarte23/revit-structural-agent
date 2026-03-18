@@ -75,9 +75,7 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
                 "Created:" + Environment.NewLine +
                 $"- Footings: {summary.FootingsCreated}{Environment.NewLine}" +
                 $"- Types: {summary.TypesCreated}{Environment.NewLine}{Environment.NewLine}" +
-                "Matched:" + Environment.NewLine +
-                $"- By node id: {summary.MatchedByNodeId}{Environment.NewLine}" +
-                $"- By coordinates: {summary.MatchedByCoordinates}{Environment.NewLine}{Environment.NewLine}" +
+                $"Matched by coordinates: {summary.MatchedByCoordinates}{Environment.NewLine}{Environment.NewLine}" +
                 "Skipped:" + Environment.NewLine +
                 $"- Missing columns: {summary.MissingColumns}{Environment.NewLine}" +
                 $"- Duplicates: {summary.DuplicatesSkipped}{Environment.NewLine}{Environment.NewLine}" +
@@ -145,7 +143,6 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
 
             requests.Add(new PadFoundationRequest
             {
-                NodeId = ReadRequiredInt(item, index, "node_id"),
                 WidthMeters = ReadRequiredDouble(item, index, "B"),
                 LengthMeters = ReadRequiredDouble(item, index, "L"),
                 X = ReadRequiredDouble(item, index, "x"),
@@ -174,18 +171,6 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
         return value.Value;
     }
 
-    private static int ReadRequiredInt(JsonElement item, int index, string name)
-    {
-        int? value = ReadOptionalInt(item, name);
-        if (!value.HasValue)
-        {
-            throw new InvalidOperationException(
-                $"Footing item {index} is missing required integer property '{name}'.");
-        }
-
-        return value.Value;
-    }
-
     private static double? ReadOptionalDouble(JsonElement item, string name)
     {
         if (!TryGetProperty(item, name, out JsonElement value))
@@ -196,27 +181,6 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
         if (TryReadDouble(value, out double result))
         {
             return result;
-        }
-
-        return null;
-    }
-
-    private static int? ReadOptionalInt(JsonElement item, string name)
-    {
-        if (!TryGetProperty(item, name, out JsonElement value))
-        {
-            return null;
-        }
-
-        if (value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int number))
-        {
-            return number;
-        }
-
-        if (value.ValueKind == JsonValueKind.String &&
-            int.TryParse(value.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
-        {
-            return parsed;
         }
 
         return null;
@@ -289,28 +253,21 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
             {
                 try
                 {
-                    MatchResult match = MatchColumn(request);
-                    if (match.Column is null)
+                    ColumnCandidate? column = MatchColumn(request);
+                    if (column is null)
                     {
                         summary.MissingColumns++;
                         continue;
                     }
 
-                    if (match.MatchKind == MatchKind.NodeId)
-                    {
-                        summary.MatchedByNodeId++;
-                    }
-                    else
-                    {
-                        summary.MatchedByCoordinates++;
-                    }
+                    summary.MatchedByCoordinates++;
 
                     double widthFeet = MetersToFeet(request.WidthMeters);
                     double lengthFeet = MetersToFeet(request.LengthMeters);
                     FamilySymbol symbol = GetOrCreateFoundationType(widthFeet, lengthFeet, summary);
                     Activate(symbol);
 
-                    XYZ insertionPoint = match.Column.BasePoint;
+                    XYZ insertionPoint = column.BasePoint;
                     string footingKey = FootingKey(insertionPoint, widthFeet, lengthFeet);
                     if (_existingFootingKeys.Contains(footingKey))
                     {
@@ -318,7 +275,7 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
                         continue;
                     }
 
-                    Level level = GetReferenceLevel(match.Column, insertionPoint.Z);
+                    Level level = GetReferenceLevel(column, insertionPoint.Z);
                     _document.Create.NewFamilyInstance(
                         insertionPoint,
                         symbol,
@@ -337,17 +294,8 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
             return summary;
         }
 
-        private MatchResult MatchColumn(PadFoundationRequest request)
+        private ColumnCandidate? MatchColumn(PadFoundationRequest request)
         {
-            if (request.NodeId.HasValue)
-            {
-                ColumnCandidate? byId = _columns.FirstOrDefault(column => column.BaseNodeId == request.NodeId.Value);
-                if (byId is not null)
-                {
-                    return new MatchResult(byId, MatchKind.NodeId);
-                }
-            }
-
             XYZ target = new(
                 MetersToFeet(request.X),
                 MetersToFeet(request.Y),
@@ -363,8 +311,6 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
                 .OrderBy(item => item.Distance)
                 .Select(item => item.Column)
                 .FirstOrDefault();
-
-            return new MatchResult(byCoordinates, byCoordinates is null ? MatchKind.None : MatchKind.Coordinates);
         }
 
         private FamilySymbol GetOrCreateFoundationType(double widthFeet, double lengthFeet, BuildSummary summary)
@@ -519,14 +465,10 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
                     continue;
                 }
 
-                int? baseNodeId = ColumnSourceNodeStorage.TryGetBaseNodeId(column, out int nodeId)
-                    ? nodeId
-                    : null;
-
                 ElementId baseLevelId = GetElementIdValue(column, BuiltInParameter.FAMILY_BASE_LEVEL_PARAM)
                     ?? ElementId.InvalidElementId;
 
-                result.Add(new ColumnCandidate(column, basePoint, baseNodeId, baseLevelId));
+                result.Add(new ColumnCandidate(column, basePoint, baseLevelId));
             }
 
             return result;
@@ -716,25 +658,13 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
     private sealed record ColumnCandidate(
         FamilyInstance Column,
         XYZ BasePoint,
-        int? BaseNodeId,
         ElementId BaseLevelId);
-
-    private sealed record MatchResult(ColumnCandidate? Column, MatchKind MatchKind);
-
-    private enum MatchKind
-    {
-        None,
-        NodeId,
-        Coordinates,
-    }
 
     private sealed class BuildSummary
     {
         public int FootingsCreated { get; set; }
 
         public int TypesCreated { get; set; }
-
-        public int MatchedByNodeId { get; set; }
 
         public int MatchedByCoordinates { get; set; }
 

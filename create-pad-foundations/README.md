@@ -10,7 +10,6 @@ The input must be a JSON array.
 
 Each footing request must include:
 
-- `node_id`
 - `B`
 - `L`
 - `x`
@@ -24,7 +23,6 @@ Example:
 ```json
 [
   {
-    "node_id": 101,
     "B": 2.0,
     "L": 2.0,
     "x": 0.0,
@@ -36,10 +34,7 @@ Example:
 
 ## Matching logic
 
-For each footing request, the add-in tries to find the target column in this order:
-
-1. By stored source node id on the column, if that metadata already exists in the Revit model
-2. By the footing point coordinates using a small 3D tolerance
+For each footing request, the add-in finds the structural column whose base point matches `x`, `y`, `z` within a small 3D tolerance.
 
 The footing is inserted at the matched column base point. Duplicate footing placements at the same point and size are skipped.
 
@@ -98,7 +93,6 @@ powershell -ExecutionPolicy Bypass -File .\create-pad-foundations\scripts\regist
 - Import command: [CreatePadFoundationsCommand.cs](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/src/PadFoundationImport/CreatePadFoundationsCommand.cs)
 - DTOs: [PadFoundationDtos.cs](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/src/PadFoundationImport/Models/PadFoundationDtos.cs)
 - Settings store: [SettingsStore.cs](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/src/PadFoundationImport/SettingsStore.cs)
-- Column metadata helper: [ColumnSourceNodeStorage.cs](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/src/PadFoundationImport/ColumnSourceNodeStorage.cs)
 - Manifest template: [PadFoundationImport.addin](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/src/PadFoundationImport/Manifest/PadFoundationImport.addin)
 - Build script: [build-addin.ps1](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/scripts/build-addin.ps1)
 - Register script: [register-addin.ps1](/Users/alejandroduarte/.codex/worktrees/e677/revit-structural-agent/create-pad-foundations/scripts/register-addin.ps1)
