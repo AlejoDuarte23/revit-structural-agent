@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="DBApplication">
+    <Name>PadFoundationsDA</Name>
+    <Assembly>PadFoundationsDA8.dll</Assembly>
+    <AddInId>F26D0F7B-A828-4D0C-8EF5-0124A63D8306</AddInId>
+    <FullClassName>PadFoundationsDA.App</FullClassName>
+    <VendorId>AD23</VendorId>
+    <VendorDescription>Headless pad foundations creation for APS Design Automation</VendorDescription>
+  </AddIn>
+</RevitAddIns>
