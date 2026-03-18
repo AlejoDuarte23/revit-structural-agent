@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>Create Pad Foundations</Name>
+    <Assembly>C:\RevitAddins\create-pad-foundations\PadFoundationImport.dll</Assembly>
+    <AddInId>3F56A11E-F98C-4C59-BF84-4F110AA7B7E3</AddInId>
+    <FullClassName>PadFoundationImport.App</FullClassName>
+    <VendorId>AI</VendorId>
+    <VendorDescription>Pad foundation import from JSON</VendorDescription>
+  </AddIn>
+</RevitAddIns>
