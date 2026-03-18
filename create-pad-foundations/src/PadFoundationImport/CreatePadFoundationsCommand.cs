@@ -311,6 +311,8 @@ public sealed class CreatePadFoundationsCommand : IExternalCommand
                 .OrderBy(item => item.Distance)
                 .Select(item => item.Column)
                 .FirstOrDefault();
+
+            return byCoordinates;
         }
 
         private FamilySymbol GetOrCreateFoundationType(double widthFeet, double lengthFeet, BuildSummary summary)
