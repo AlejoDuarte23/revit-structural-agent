@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage Name="RevitDesignAutomation"
+                    Description="Create pad foundations from JSON"
+                    Author="Alejo Duarte">
+  <CompanyDetails Name="Alejo Duarte" Url="https://github.com/AlejoDuarte23"/>
+  <Components Description="Pad foundations DA app">
+    <RuntimeRequirements SeriesMin="R2025" SeriesMax="R2025" Platform="Revit" OS="Win64"/>
+    <ComponentEntry AppName="PadFoundationsDA"
+                    Version="1.0.0"
+                    AppDescription="Create isolated pad foundations under structural columns from JSON"
+                    ModuleName="./Contents/PadFoundationsDA8.addin"
+                    LoadOnRevitStartup="True"
+                    LoadOnCommandInvocation="False"/>
+  </Components>
+</ApplicationPackage>
