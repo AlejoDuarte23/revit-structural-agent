@@ -394,9 +394,9 @@ internal static class FoundationPlacementService
             SetLengthParameter(symbol, parameters.PileDiameter, units, "Pile Diameter");
             SetLengthParameter(symbol, parameters.PileCentresVertical, units, "Pile Centres Vertical");
             SetLengthParameter(symbol, parameters.PileCentresHorizontal, units, "Pile Centres Horizontal");
-            SetLengthParameter(symbol, parameters.Length1, units, "Length 1", "Length1");
-            SetLengthParameter(symbol, parameters.Length2, units, "Length 2", "Length2");
-            SetLengthParameter(symbol, parameters.PileCutOut, units, "Pile Cut Out", "Pile Cutout");
+            SetLengthParameter(symbol, parameters.Length1, units, "Length 1");
+            SetLengthParameter(symbol, parameters.Length2, units, "Length 2");
+            SetLengthParameter(symbol, parameters.PileCutOut, units, "Pile Cut Out");
             SetLengthParameter(symbol, parameters.Clearance, units, "Clearance");
         }
 
