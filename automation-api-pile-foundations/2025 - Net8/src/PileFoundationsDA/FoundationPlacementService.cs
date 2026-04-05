@@ -1,17 +1,13 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using Autodesk.Revit.UI;
-using PileFoundationImport.Models;
-using WinForms = System.Windows.Forms;
+using PileFoundationsDA.Models;
 
-namespace PileFoundationImport;
+namespace PileFoundationsDA;
 
-[Transaction(TransactionMode.Manual)]
-public sealed class CreatePileFoundationsCommand : IExternalCommand
+internal static class FoundationPlacementService
 {
     private const string DefaultFamilyName = "Pile Cap-3 Round Pile";
     private const string DefaultTypeName = "Standard";
@@ -24,110 +20,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         CommentHandling = JsonCommentHandling.Skip,
     };
 
-    public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
-    {
-        UIDocument uiDocument = commandData.Application.ActiveUIDocument;
-        Document document = uiDocument.Document;
-
-        if (document.IsFamilyDocument)
-        {
-            Autodesk.Revit.UI.TaskDialog.Show(
-                "Pile Foundations",
-                "Open a Revit project document before creating pile foundations.");
-            return Result.Failed;
-        }
-
-        string? path = PromptForJsonPath();
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return Result.Cancelled;
-        }
-
-        SettingsStore.SaveLastJsonPath(path);
-
-        IReadOnlyList<PileFoundationRequest> requests;
-        try
-        {
-            requests = ReadJson(path);
-        }
-        catch (Exception ex)
-        {
-            Autodesk.Revit.UI.TaskDialog.Show(
-                "Pile Foundations",
-                $"Failed to read JSON:{Environment.NewLine}{Environment.NewLine}{ex.Message}");
-            return Result.Failed;
-        }
-
-        if (requests.Count == 0)
-        {
-            Autodesk.Revit.UI.TaskDialog.Show(
-                "Pile Foundations",
-                "The JSON file does not contain any pile foundation requests.");
-            return Result.Failed;
-        }
-
-        try
-        {
-            using Transaction transaction = new(document, "Create Pile Foundations");
-            transaction.Start();
-
-            FoundationBuilder builder = new(document);
-            BuildSummary summary = builder.Create(requests);
-
-            transaction.Commit();
-
-            Autodesk.Revit.UI.TaskDialog.Show(
-                "Pile Foundations",
-                "Created:" + Environment.NewLine +
-                $"- Foundations: {summary.FoundationsCreated}{Environment.NewLine}" +
-                $"- Types: {summary.TypesCreated}{Environment.NewLine}{Environment.NewLine}" +
-                $"Matched by coordinates: {summary.MatchedByCoordinates}{Environment.NewLine}{Environment.NewLine}" +
-                "Skipped:" + Environment.NewLine +
-                $"- Missing columns: {summary.MissingColumns}{Environment.NewLine}" +
-                $"- Duplicates: {summary.DuplicatesSkipped}{Environment.NewLine}{Environment.NewLine}" +
-                $"Errors: {summary.Errors}" +
-                (summary.ErrorMessages.Count == 0
-                    ? string.Empty
-                    : Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, summary.ErrorMessages)));
-
-            return Result.Succeeded;
-        }
-        catch (Exception ex)
-        {
-            Autodesk.Revit.UI.TaskDialog.Show(
-                "Pile Foundations",
-                $"Pile foundation creation failed:{Environment.NewLine}{Environment.NewLine}{ex.Message}");
-            return Result.Failed;
-        }
-    }
-
-    private static string? PromptForJsonPath()
-    {
-        string? lastPath = SettingsStore.LoadLastJsonPath();
-
-        using WinForms.OpenFileDialog dialog = new();
-        dialog.Title = "Select pile foundations JSON";
-        dialog.Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*";
-        dialog.Multiselect = false;
-
-        if (!string.IsNullOrWhiteSpace(lastPath))
-        {
-            string? lastDirectory = Path.GetDirectoryName(lastPath);
-            if (!string.IsNullOrWhiteSpace(lastDirectory) && Directory.Exists(lastDirectory))
-            {
-                dialog.InitialDirectory = lastDirectory;
-            }
-
-            if (File.Exists(lastPath))
-            {
-                dialog.FileName = Path.GetFileName(lastPath);
-            }
-        }
-
-        return dialog.ShowDialog() == WinForms.DialogResult.OK ? dialog.FileName : null;
-    }
-
-    private static IReadOnlyList<PileFoundationRequest> ReadJson(string path)
+    public static IReadOnlyList<PileFoundationRequest> ReadRequests(string path)
     {
         using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path), JsonOptions);
         JsonElement root = document.RootElement;
@@ -210,6 +103,21 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         return requests;
     }
 
+    public static BuildSummary Create(Document document, IReadOnlyList<PileFoundationRequest> requests)
+    {
+        if (document is null)
+        {
+            throw new ArgumentNullException(nameof(document));
+        }
+
+        if (requests is null)
+        {
+            throw new ArgumentNullException(nameof(requests));
+        }
+
+        return new Builder(document).Create(requests);
+    }
+
     private static PileFoundationTypeParameters ReadParameters(
         JsonElement item,
         string propertyName,
@@ -271,16 +179,6 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         return value.Value;
     }
 
-    private static string? ReadOptionalString(JsonElement item, string name)
-    {
-        if (!TryGetProperty(item, name, out JsonElement value))
-        {
-            return null;
-        }
-
-        return value.ValueKind == JsonValueKind.String ? value.GetString() : null;
-    }
-
     private static double? ReadOptionalDouble(JsonElement item, string name)
     {
         if (!TryGetProperty(item, name, out JsonElement value))
@@ -294,6 +192,16 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         }
 
         return null;
+    }
+
+    private static string? ReadOptionalString(JsonElement item, string name)
+    {
+        if (!TryGetProperty(item, name, out JsonElement value))
+        {
+            return null;
+        }
+
+        return value.ValueKind == JsonValueKind.String ? value.GetString() : null;
     }
 
     private static bool TryReadDouble(JsonElement value, out double result)
@@ -328,7 +236,34 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         return false;
     }
 
-    private sealed class FoundationBuilder
+    public sealed class BuildSummary
+    {
+        public int FoundationsCreated { get; set; }
+
+        public int TypesCreated { get; set; }
+
+        public int MatchedByCoordinates { get; set; }
+
+        public int MissingColumns { get; set; }
+
+        public int DuplicatesSkipped { get; set; }
+
+        public int Errors { get; set; }
+
+        public List<string> ErrorMessages { get; } = new();
+
+        public void AddError(string message)
+        {
+            Errors++;
+
+            if (ErrorMessages.Count < 10)
+            {
+                ErrorMessages.Add(message);
+            }
+        }
+    }
+
+    private sealed class Builder
     {
         private static readonly double MatchToleranceFeet =
             UnitUtils.ConvertToInternalUnits(10.0, UnitTypeId.Millimeters);
@@ -339,7 +274,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         private readonly HashSet<string> _existingFoundationKeys;
         private readonly List<Level> _levels;
 
-        public FoundationBuilder(Document document)
+        public Builder(Document document)
         {
             _document = document;
             _columns = CollectColumns(document);
@@ -406,7 +341,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                 ToInternalLength(request.Y, request.Units),
                 ToInternalLength(request.Z, request.Units));
 
-            ColumnCandidate? byCoordinates = _columns
+            return _columns
                 .Select(column => new
                 {
                     Column = column,
@@ -416,8 +351,6 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                 .OrderBy(item => item.Distance)
                 .Select(item => item.Column)
                 .FirstOrDefault();
-
-            return byCoordinates;
         }
 
         private FamilySymbol GetOrCreateFoundationType(PileFoundationRequest request, BuildSummary summary)
@@ -452,10 +385,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
             return duplicated;
         }
 
-        private static void ApplyParameters(
-            FamilySymbol symbol,
-            PileFoundationTypeParameters parameters,
-            string units)
+        private static void ApplyParameters(FamilySymbol symbol, PileFoundationTypeParameters parameters, string units)
         {
             SetIntegerParameter(symbol, DefaultNumberOfPiles, "Number of Piles");
             SetLengthParameter(symbol, parameters.FoundationThickness, units, "Foundation Thickness");
@@ -578,7 +508,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                 ElementId baseLevelId = GetElementIdValue(column, BuiltInParameter.FAMILY_BASE_LEVEL_PARAM)
                     ?? ElementId.InvalidElementId;
 
-                result.Add(new ColumnCandidate(column, basePoint!, baseLevelId));
+                result.Add(new ColumnCandidate(column, basePoint, baseLevelId));
             }
 
             return result;
@@ -629,7 +559,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                     continue;
                 }
 
-                keys.Add(FoundationKey(point!));
+                keys.Add(FoundationKey(point));
             }
 
             return keys;
@@ -772,33 +702,6 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
         FamilyInstance Column,
         XYZ BasePoint,
         ElementId BaseLevelId);
-
-    private sealed class BuildSummary
-    {
-        public int FoundationsCreated { get; set; }
-
-        public int TypesCreated { get; set; }
-
-        public int MatchedByCoordinates { get; set; }
-
-        public int MissingColumns { get; set; }
-
-        public int DuplicatesSkipped { get; set; }
-
-        public int Errors { get; set; }
-
-        public List<string> ErrorMessages { get; } = new();
-
-        public void AddError(string message)
-        {
-            Errors++;
-
-            if (ErrorMessages.Count < 5)
-            {
-                ErrorMessages.Add("- " + message);
-            }
-        }
-    }
 
     private sealed class RequestDefaults
     {

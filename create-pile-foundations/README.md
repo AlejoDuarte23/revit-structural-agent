@@ -8,19 +8,22 @@ The add-in targets `net8.0-windows`, which matches Revit 2025+.
 
 ## JSON contract
 
-The input must be a JSON array.
+The recommended input is a single JSON object with shared pile settings and a `placements` array.
 
-Each request must include:
+Top-level properties:
+
+- `familyName`
+- `typeName`
+- `targetTypeName`
+- `units`
+- `parameters`
+- `placements`
+
+Each placement must include:
 
 - `x`
 - `y`
 - `z`
-
-Optional request properties:
-
-- `units` with one of `Millimeters`, `Centimeters`, `Meters`, `Inches`, or `Feet`
-- `targetTypeName`
-- `parameters`
 
 Defaults used when omitted:
 
@@ -31,32 +34,35 @@ Defaults used when omitted:
 
 `typeName` is the loaded template type already present in the Revit project. If `parameters` are provided, the add-in duplicates that loaded type into a repo-generated type name unless `targetTypeName` is explicitly supplied.
 
-Unknown properties are ignored. That means you can reuse pad-style coordinate payloads that still include fields like `B` and `L`; this add-in will only read the location fields plus its own optional pile settings.
+For compatibility, the parser also accepts the older array-only shape, but `B` and `L` are not meaningful for the pile workflow and should not be used going forward.
 
 Example:
 
 ```json
-[
-  {
-    "B": 1.0,
-    "L": 1.0,
-    "x": 4.0,
-    "y": 0.0,
-    "z": 0.0,
-    "parameters": {
-      "foundationThickness": 750,
-      "widthIndent": 500,
-      "pileLength": 6000,
-      "pileDiameter": 450,
-      "pileCentresVertical": 1350,
-      "pileCentresHorizontal": 1350,
-      "length1": 450,
-      "length2": 750,
-      "pileCutOut": 75,
-      "clearance": 375
+{
+  "familyName": "Pile Cap-3 Round Pile",
+  "typeName": "Standard",
+  "units": "Millimeters",
+  "parameters": {
+    "foundationThickness": 750,
+    "widthIndent": 500,
+    "pileLength": 6000,
+    "pileDiameter": 450,
+    "pileCentresVertical": 1350,
+    "pileCentresHorizontal": 1350,
+    "length1": 450,
+    "length2": 750,
+    "pileCutOut": 75,
+    "clearance": 375
+  },
+  "placements": [
+    {
+      "x": 4000,
+      "y": 0,
+      "z": 0
     }
-  }
-]
+  ]
+}
 ```
 
 ## Matching logic
