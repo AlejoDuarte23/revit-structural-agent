@@ -533,7 +533,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                 ElementId baseLevelId = GetElementIdValue(column, BuiltInParameter.FAMILY_BASE_LEVEL_PARAM)
                     ?? ElementId.InvalidElementId;
 
-                result.Add(new ColumnCandidate(column, basePoint, baseLevelId));
+                result.Add(new ColumnCandidate(column, basePoint!, baseLevelId));
             }
 
             return result;
@@ -584,7 +584,7 @@ public sealed class CreatePileFoundationsCommand : IExternalCommand
                     continue;
                 }
 
-                keys.Add(FoundationKey(point));
+                keys.Add(FoundationKey(point!));
             }
 
             return keys;

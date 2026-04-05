@@ -10,6 +10,8 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RevitVersion Condition="'$(RevitVersion)' == ''">2025</RevitVersion>
     <RevitInstallDir Condition="'$(RevitInstallDir)' == ''">C:\Program Files\Autodesk\Revit $(RevitVersion)</RevitInstallDir>
+    <!-- Suppress WindowsBase version conflict warnings for Revit 2025 -->
+    <NoWarn>$(NoWarn);MSB3277</NoWarn>
   </PropertyGroup>
 
   <Target Name="EnsureRevitInstallDir" BeforeTargets="ResolveReferences">

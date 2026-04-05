@@ -19,7 +19,18 @@ public sealed class App : IExternalApplication
             // The tab already exists in this Revit session.
         }
 
-        RibbonPanel panel = application.CreateRibbonPanel(TabName, PanelName);
+        // Try to get existing panel, or create new one
+        RibbonPanel? panel = null;
+        foreach (var existingPanel in application.GetRibbonPanels(TabName))
+        {
+            if (existingPanel.Name == PanelName)
+            {
+                panel = existingPanel;
+                break;
+            }
+        }
+
+        panel ??= application.CreateRibbonPanel(TabName, PanelName);
         string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
 
         PushButtonData buttonData = new(
