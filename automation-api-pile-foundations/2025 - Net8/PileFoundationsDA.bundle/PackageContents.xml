@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage Name="RevitDesignAutomation"
+                    Description="Create pile foundations from JSON"
+                    Author="Alejo Duarte">
+  <CompanyDetails Name="Alejo Duarte" Url="https://github.com/AlejoDuarte23"/>
+  <Components Description="Pile foundations DA app">
+    <RuntimeRequirements SeriesMin="R2025" SeriesMax="R2025" Platform="Revit" OS="Win64"/>
+    <ComponentEntry AppName="PileFoundationsDA"
+                    Version="1.0.0"
+                    AppDescription="Create pile foundations under structural columns from JSON"
+                    ModuleName="./Contents/PileFoundationsDA8.addin"
+                    LoadOnRevitStartup="True"
+                    LoadOnCommandInvocation="False"/>
+  </Components>
+</ApplicationPackage>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="DBApplication">
+    <Name>PileFoundationsDA</Name>
+    <Assembly>PileFoundationsDA8.dll</Assembly>
+    <AddInId>2D20B731-A1F3-4FC7-8B9F-670C51B91813</AddInId>
+    <FullClassName>PileFoundationsDA.App</FullClassName>
+    <VendorId>AD23</VendorId>
+    <VendorDescription>Headless pile foundations creation for APS Design Automation</VendorDescription>
+  </AddIn>
+</RevitAddIns>
