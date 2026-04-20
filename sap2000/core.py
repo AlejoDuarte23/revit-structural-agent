@@ -179,10 +179,28 @@ def get_support_nodes(SapModel) -> List[Dict[str, Any]]:
    return supports
 
 # -------------------- Results (combos + reactions) --------------------
+def save_model(SapModel, file_path: str | Path) -> Path:
+   resolved_path = Path(file_path).resolve()
+   resolved_path.parent.mkdir(parents=True, exist_ok=True)
+
+   result = SapModel.File.Save(str(resolved_path))
+   ret = result[0] if isinstance(result, tuple) else result
+   if ret != 0:
+       raise RuntimeError(f"File.Save failed for {resolved_path} (ret={ret})")
+
+   return resolved_path
+
+
 def run_analysis(SapModel) -> None:
    ret = SapModel.Analyze.RunAnalysis()
    if ret != 0:
        raise RuntimeError(f"Analyze.RunAnalysis failed (ret={ret})")
+
+
+def save_model_and_run_analysis(SapModel, file_path: str | Path) -> Path:
+   resolved_path = save_model(SapModel, file_path)
+   run_analysis(SapModel)
+   return resolved_path
 
 
 def ensure_blank_model(SapModel, units: int = 6) -> None:

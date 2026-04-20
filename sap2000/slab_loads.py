@@ -5,14 +5,21 @@ from sap2000.load_cases import (
     CSI_LOADPATTERN_DEAD,
     CSI_LOADPATTERN_LIVE,
     ensure_load_pattern,
-    recreate_linear_additive_combo,
-    recreate_static_linear_case_from_pattern,
+    ensure_linear_additive_combo,
+    ensure_static_linear_case,
 )
 
 CSI_ITEMTYPE_OBJECTS = 0
 CSI_DIR_GLOBAL_Z = 6
 CSI_DIR_GRAVITY = 10
 LOAD_COMPONENT_TOLERANCE = 1e-9
+DEFAULT_DEAD_PATTERN_NAME = "DL"
+DEFAULT_LIVE_PATTERN_NAME = "LL"
+DEFAULT_DEAD_CASE_NAME = "DL"
+DEFAULT_LIVE_CASE_NAME = "LL"
+DEFAULT_ULS_COMBO_NAME = "1.35DL + 1.35(LL) (ULS)"
+DEFAULT_SLS_FULL_COMBO_NAME = "DL + LL (SLS)"
+DEFAULT_SLS_REDUCED_COMBO_NAME = "DL + 0.5LL (SLS)"
 
 
 def get_all_area_names(SapModel) -> List[str]:
@@ -80,18 +87,26 @@ def assign_uniform_area_load_to_areas(
     return assigned
 
 
-def define_basic_slab_gravity_loading(
+def downward_global_z_uniform_load(magnitude: float) -> float:
+    """
+    Convert a positive slab pressure magnitude into a downward Global Z load.
+    """
+    return -abs(float(magnitude))
+
+
+def define_uniform_slab_load_cases_and_combos(
     SapModel,
     slab_area_names: Iterable[str],
-    dead_uniform_load: float,
-    live_uniform_load: float,
+    dead_uniform_load_kn_per_m2: float = 1.0,
+    live_uniform_load_kn_per_m2: float = 2.0,
     dead_self_weight_multiplier: float = 0.0,
-    dead_pattern_name: str = "DEAD",
-    live_pattern_name: str = "LIVE",
-    dead_case_name: str = "DEAD",
-    live_case_name: str = "LIVE",
-    dead_combo_name: str = "COMBO_DEAD",
-    live_combo_name: str = "COMBO_LIVE",
+    dead_pattern_name: str = DEFAULT_DEAD_PATTERN_NAME,
+    live_pattern_name: str = DEFAULT_LIVE_PATTERN_NAME,
+    dead_case_name: str = DEFAULT_DEAD_CASE_NAME,
+    live_case_name: str = DEFAULT_LIVE_CASE_NAME,
+    uls_combo_name: str = DEFAULT_ULS_COMBO_NAME,
+    sls_full_combo_name: str = DEFAULT_SLS_FULL_COMBO_NAME,
+    sls_reduced_combo_name: str = DEFAULT_SLS_REDUCED_COMBO_NAME,
 ) -> Dict[str, Any]:
     slab_area_names = list(slab_area_names)
 
@@ -110,35 +125,49 @@ def define_basic_slab_gravity_loading(
         add_analysis_case=False,
     )
 
-    recreate_static_linear_case_from_pattern(
+    ensure_static_linear_case(
         SapModel,
         case_name=dead_case_name,
         pattern_name=dead_pattern_name,
         scale_factor=1.0,
     )
-    recreate_static_linear_case_from_pattern(
+    ensure_static_linear_case(
         SapModel,
         case_name=live_case_name,
         pattern_name=live_pattern_name,
         scale_factor=1.0,
     )
 
-    recreate_linear_additive_combo(
+    ensure_linear_additive_combo(
         SapModel,
-        combo_name=dead_combo_name,
-        case_scale_factors={dead_case_name: 1.0},
+        combo_name=uls_combo_name,
+        case_scale_factors={
+            dead_case_name: 1.35,
+            live_case_name: 1.35,
+        },
     )
-    recreate_linear_additive_combo(
+    ensure_linear_additive_combo(
         SapModel,
-        combo_name=live_combo_name,
-        case_scale_factors={live_case_name: 1.0},
+        combo_name=sls_full_combo_name,
+        case_scale_factors={
+            dead_case_name: 1.0,
+            live_case_name: 1.0,
+        },
+    )
+    ensure_linear_additive_combo(
+        SapModel,
+        combo_name=sls_reduced_combo_name,
+        case_scale_factors={
+            dead_case_name: 1.0,
+            live_case_name: 0.5,
+        },
     )
 
     assigned_dead = assign_uniform_area_load_to_areas(
         SapModel,
         area_names=slab_area_names,
         load_pattern_name=dead_pattern_name,
-        value=dead_uniform_load,
+        value=downward_global_z_uniform_load(dead_uniform_load_kn_per_m2),
         direction=CSI_DIR_GLOBAL_Z,
         coordinate_system="Global",
         replace=True,
@@ -147,7 +176,7 @@ def define_basic_slab_gravity_loading(
         SapModel,
         area_names=slab_area_names,
         load_pattern_name=live_pattern_name,
-        value=live_uniform_load,
+        value=downward_global_z_uniform_load(live_uniform_load_kn_per_m2),
         direction=CSI_DIR_GLOBAL_Z,
         coordinate_system="Global",
         replace=True,
@@ -156,9 +185,52 @@ def define_basic_slab_gravity_loading(
     return {
         "patterns": [dead_pattern_name, live_pattern_name],
         "cases": [dead_case_name, live_case_name],
-        "combos": [dead_combo_name, live_combo_name],
+        "combos": [
+            uls_combo_name,
+            sls_full_combo_name,
+            sls_reduced_combo_name,
+        ],
+        "dead_uniform_load_kn_per_m2": abs(float(dead_uniform_load_kn_per_m2)),
+        "live_uniform_load_kn_per_m2": abs(float(live_uniform_load_kn_per_m2)),
         "dead_loaded_areas": assigned_dead,
         "live_loaded_areas": assigned_live,
+    }
+
+
+def define_basic_slab_gravity_loading(
+    SapModel,
+    slab_area_names: Iterable[str],
+    dead_uniform_load: float,
+    live_uniform_load: float,
+    dead_self_weight_multiplier: float = 0.0,
+    dead_pattern_name: str = "DEAD",
+    live_pattern_name: str = "LIVE",
+    dead_case_name: str = "DEAD",
+    live_case_name: str = "LIVE",
+    dead_combo_name: str = "COMBO_DEAD",
+    live_combo_name: str = "COMBO_LIVE",
+) -> Dict[str, Any]:
+    slab_area_names = list(slab_area_names)
+    result = define_uniform_slab_load_cases_and_combos(
+        SapModel,
+        slab_area_names=slab_area_names,
+        dead_uniform_load_kn_per_m2=abs(float(dead_uniform_load)),
+        live_uniform_load_kn_per_m2=abs(float(live_uniform_load)),
+        dead_self_weight_multiplier=dead_self_weight_multiplier,
+        dead_pattern_name=dead_pattern_name,
+        live_pattern_name=live_pattern_name,
+        dead_case_name=dead_case_name,
+        live_case_name=live_case_name,
+        uls_combo_name=dead_combo_name,
+        sls_full_combo_name=live_combo_name,
+        sls_reduced_combo_name=f"{live_combo_name}_REDUCED",
+    )
+    return {
+        "patterns": result["patterns"],
+        "cases": result["cases"],
+        "combos": [dead_combo_name, live_combo_name],
+        "dead_loaded_areas": result["dead_loaded_areas"],
+        "live_loaded_areas": result["live_loaded_areas"],
     }
 
 
